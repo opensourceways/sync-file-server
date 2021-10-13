@@ -1,0 +1,32 @@
+syntax = "proto3";
+
+package repo;
+
+option go_package = "/github.com/opensourceways/sync-file-server/protocol";
+
+message ListRepoRequest {
+  string org = 1;
+}
+
+message ListRepoResponse {
+  repeated string repos = 1;
+}
+
+message ListBranchesOfRepoRequest {
+  string org = 1;
+  string repo = 2;
+}
+
+message BranchInfo {
+  string name = 1;
+  string sha = 2;
+}
+
+message ListBranchesOfRepoResponse {
+  repeated BranchInfo branches = 1;
+}
+
+service Repo {
+  rpc ListRepos(ListRepoRequest) returns (ListRepoResponse) {}
+  rpc ListBranchesOfRepo(ListBranchesOfRepoRequest) returns (ListBranchesOfRepoResponse) {}
+}
