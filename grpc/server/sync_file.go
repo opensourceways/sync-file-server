@@ -10,10 +10,11 @@ import (
 	"github.com/opensourceways/sync-file-server/protocol"
 )
 
-func newSyncFileServer(concurrentSize int) (protocol.SyncFileServer, error) {
+func newSyncFileServer(concurrentSize int, log ants.Logger) (*syncFileServer, error) {
 	p, err := ants.NewPool(concurrentSize, ants.WithOptions(ants.Options{
 		PreAlloc:    true,
 		Nonblocking: true,
+		Logger:      log,
 	}))
 	if err != nil {
 		return nil, err
@@ -25,6 +26,12 @@ func newSyncFileServer(concurrentSize int) (protocol.SyncFileServer, error) {
 type syncFileServer struct {
 	pool *ants.Pool
 	protocol.UnimplementedSyncFileServer
+}
+
+func (s *syncFileServer) Stop() {
+	if s != nil && s.pool != nil {
+		s.pool.Release()
+	}
 }
 
 func (s *syncFileServer) SyncFile(ctx context.Context, input *protocol.SyncFileRequest) (*protocol.Result, error) {

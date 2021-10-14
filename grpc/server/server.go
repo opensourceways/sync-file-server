@@ -3,6 +3,8 @@ package server
 import (
 	"net"
 
+	"github.com/opensourceways/robot-gitee-plugin-lib/interrupts"
+	"github.com/sirupsen/logrus"
 	"google.golang.org/grpc"
 
 	"github.com/opensourceways/sync-file-server/backend"
@@ -10,35 +12,61 @@ import (
 	"github.com/opensourceways/sync-file-server/protocol"
 )
 
-var server *grpc.Server
+func Start(port string, concurrentSize int, cli backend.Client, logs *logrus.Entry) error {
+	clears := []func(){
+		models.Stop,
+	}
+	defer func() {
+		for _, f := range clears {
+			f()
+		}
+		logs.Info("server exits.")
+	}()
 
-func Start(port string, concurrentSize int, cli backend.Client) error {
 	backend.RegisterClient(cli)
 
-	if err := models.NewPool(concurrentSize * 10); err != nil {
+	log := logWapper{log: logs}
+
+	if err := models.NewPool(concurrentSize*10, log); err != nil {
 		return err
 	}
 
-	syncFileServer, err := newSyncFileServer(concurrentSize)
+	syncFileServer, err := newSyncFileServer(concurrentSize, log)
 	if err != nil {
 		return err
 	}
+	clears = append(clears, syncFileServer.Stop)
 
 	listen, err := net.Listen("tcp", port)
 	if err != nil {
 		return err
 	}
 
-	server = grpc.NewServer()
-
+	server := grpc.NewServer()
 	protocol.RegisterSyncFileServer(server, syncFileServer)
 	protocol.RegisterRepoServer(server, repoServer{})
 
-	return server.Serve(listen)
+	run(server, listen, logs)
+	return nil
 }
 
-func Stop() {
-	if server != nil {
+func run(server *grpc.Server, listen net.Listener, log *logrus.Entry) {
+	defer interrupts.WaitForGracefulShutdown()
+
+	interrupts.OnInterrupt(func() {
+		log.Errorf("grpc server exit...")
 		server.Stop()
+	})
+
+	if err := server.Serve(listen); err != nil {
+		log.Error(err)
 	}
+}
+
+type logWapper struct {
+	log *logrus.Entry
+}
+
+func (l logWapper) Printf(format string, args ...interface{}) {
+	l.log.Infof(format, args...)
 }

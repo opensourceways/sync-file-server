@@ -3,6 +3,8 @@ package models
 import (
 	"path/filepath"
 
+	"github.com/sirupsen/logrus"
+
 	"github.com/opensourceways/sync-file-server/backend"
 )
 
@@ -44,6 +46,11 @@ func syncFile(branch Branch, branchSHA string, files []string) error {
 			sha, content, err := c.GetFileConent(branch, f)
 			if err != nil {
 				ch <- fetchFileResult{
+					File: File{
+						RepoFile: RepoFile{
+							Path: f,
+						},
+					},
 					err: err,
 				}
 			} else {
@@ -60,13 +67,21 @@ func syncFile(branch Branch, branchSHA string, files []string) error {
 		})
 	}
 
+	log := logrus.WithFields(
+		logrus.Fields{
+			"org":        branch.Org,
+			"repo":       branch.Repo,
+			"branch":     branch.Branch,
+			"branch sha": branchSHA,
+		},
+	)
 	i := 0
 	result := make([]File, 0, n)
 	for r := range ch {
 		if r.err == nil {
 			result = append(result, r.File)
 		} else {
-			// log
+			log.WithField("file", r.File).WithError(r.err).Error("sync file")
 		}
 
 		if i++; i == n {
