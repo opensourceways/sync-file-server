@@ -2,6 +2,7 @@ package server
 
 import (
 	"context"
+	"time"
 
 	"github.com/panjf2000/ants/v2"
 
@@ -38,7 +39,7 @@ func (s *syncFileServer) SyncFile(ctx context.Context, input *protocol.SyncFileR
 		Files:     input.Files,
 	}
 
-	err := s.pool.Submit(func() {
+	err := s.submitTask(ctx, func() {
 		if err := opt.Create(); err != nil {
 			//log
 		}
@@ -59,11 +60,34 @@ func (s *syncFileServer) SyncRepoFile(ctx context.Context, input *protocol.SyncR
 		FileNames: input.FileNames,
 	}
 
-	err := s.pool.Submit(func() {
+	err := s.submitTask(ctx, func() {
 		if err := opt.Create(); err != nil {
 			//log
 		}
 	})
 
 	return new(protocol.Result), err
+}
+
+func (s *syncFileServer) submitTask(ctx context.Context, task func()) error {
+	done := ctx.Done()
+	if done == nil {
+		return s.pool.Submit(task)
+	}
+
+	for {
+		select {
+		case <-done:
+			return ctx.Err()
+		default:
+			err := s.pool.Submit(task)
+			if err == nil {
+				return nil
+			}
+			if err.Error() != ants.ErrPoolOverload.Error() {
+				return err
+			}
+			time.Sleep(10 * time.Millisecond)
+		}
+	}
 }
