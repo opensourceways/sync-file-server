@@ -2,7 +2,7 @@ syntax = "proto3";
 
 package syncfile;
 
-option go_package = "/github.com/opensourceways/sync-file-server/protocol";
+option go_package = "../protocol";
 
 message Branch {
   string org = 1;

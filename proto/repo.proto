@@ -2,7 +2,7 @@ syntax = "proto3";
 
 package repo;
 
-option go_package = "/github.com/opensourceways/sync-file-server/protocol";
+option go_package = "../protocol";
 
 message ListRepoRequest {
   string org = 1;
