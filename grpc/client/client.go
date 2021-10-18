@@ -18,6 +18,7 @@ func NewClient(endpoint string) (Client, error) {
 	return &client{
 		RepoClient:     repoCli,
 		SyncFileClient: syncFileCli,
+		conn:           conn,
 	}, nil
 }
 
