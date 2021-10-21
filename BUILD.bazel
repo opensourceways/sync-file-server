@@ -1,5 +1,25 @@
+load("@io_bazel_rules_go//go:def.bzl", "go_binary", "go_library")
 load("@bazel_gazelle//:def.bzl", "gazelle")
 
 # gazelle:proto disable_global
 # gazelle:prefix github.com/opensourceways/sync-file-server
 gazelle(name = "gazelle")
+
+go_library(
+    name = "go_default_library",
+    srcs = ["main.go"],
+    importpath = "github.com/opensourceways/sync-file-server",
+    visibility = ["//visibility:private"],
+    deps = [
+        "//caller:go_default_library",
+        "//grpc/server:go_default_library",
+        "@com_github_opensourceways_robot_gitee_plugin_lib//secret:go_default_library",
+        "@com_github_sirupsen_logrus//:go_default_library",
+    ],
+)
+
+go_binary(
+    name = "sync-file-server",
+    embed = [":go_default_library"],
+    visibility = ["//visibility:public"],
+)

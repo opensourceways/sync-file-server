@@ -1,0 +1,12 @@
+load("@io_bazel_rules_go//go:def.bzl", "go_library")
+
+go_library(
+    name = "go_default_library",
+    srcs = [
+        "builder.go",
+        "result.go",
+    ],
+    importpath = "github.com/opensourceways/sync-file-server/caller/requests",
+    visibility = ["//visibility:public"],
+    deps = ["@com_github_bitly_go_simplejson//:go_default_library"],
+)

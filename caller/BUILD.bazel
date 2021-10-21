@@ -1,0 +1,18 @@
+load("@io_bazel_rules_go//go:def.bzl", "go_library")
+
+go_library(
+    name = "go_default_library",
+    srcs = [
+        "cache.go",
+        "caller.go",
+        "gitee.go",
+    ],
+    importpath = "github.com/opensourceways/sync-file-server/caller",
+    visibility = ["//visibility:public"],
+    deps = [
+        "//backend:go_default_library",
+        "//caller/requests:go_default_library",
+        "@com_gitee_openeuler_go_gitee//gitee:go_default_library",
+        "@com_github_opensourceways_robot_gitee_plugin_lib//giteeclient:go_default_library",
+    ],
+)
