@@ -3,7 +3,7 @@ package server
 import (
 	"net"
 
-	"github.com/opensourceways/robot-gitee-plugin-lib/interrupts"
+	"github.com/opensourceways/community-robot-lib/interrupts"
 	"github.com/sirupsen/logrus"
 	"google.golang.org/grpc"
 

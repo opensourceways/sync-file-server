@@ -34,6 +34,8 @@ build: protocol load-lib gen-bzl
 	$(call tips,Start Build)
 	$(bazel) build //grpc/server:go_default_library
 	$(bazel) build //grpc/client:go_default_library
+	$(bazel) build //repo-file-cache:go_default_library
+	$(bazel) build //server
 
 .PHONY: clean
 
