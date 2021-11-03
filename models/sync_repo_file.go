@@ -70,13 +70,10 @@ func (s SyncRepoFileOption) filterFile(fileName string, files []RepoFile) ([]str
 		m[item.Path] = item.SHA
 	}
 
-	i := 0
-	n := len(files)
-	todo := make([]string, n)
+	todo := make([]string, 0, len(files))
 	for _, item := range files {
 		if item.SHA != m[item.Path] {
-			todo[i] = item.Path
-			i++
+			todo = append(todo, item.Path)
 		}
 	}
 	return todo, nil
