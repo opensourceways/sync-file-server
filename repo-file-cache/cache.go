@@ -84,25 +84,16 @@ func (fc *repoFileCache) GetFileSummary(b backend.Branch, fileName string) ([]ba
 	}
 
 	var v struct {
-		Data models.FilesInfo `json:"data"`
+		Data struct {
+			Files []backend.RepoFile `json:"files"`
+		} `json:"data"`
 	}
 
 	if err = fc.forwardTo(req, &v); err != nil {
 		return nil, err
 	}
 
-	fs := v.Data.Files
-	n := len(fs)
-	r := make([]backend.RepoFile, n)
-	for i := 0; i < n; i++ {
-		item := &fs[i]
-		r[i] = backend.RepoFile{
-			Path: string(item.Path),
-			SHA:  item.SHA,
-		}
-	}
-
-	return r, nil
+	return v.Data.Files, nil
 }
 
 func (fc *repoFileCache) forwardTo(req *http.Request, jsonResp interface{}) error {
