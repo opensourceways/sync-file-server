@@ -12,7 +12,7 @@ import (
 	"github.com/opensourceways/sync-file-server/protocol"
 )
 
-func Start(port string, concurrentSize int, cli backend.Client, logs *logrus.Entry) error {
+func Start(port string, concurrentSize int, cli backend.Client) error {
 	clears := []func(){
 		models.Stop,
 	}
@@ -20,16 +20,16 @@ func Start(port string, concurrentSize int, cli backend.Client, logs *logrus.Ent
 		for _, f := range clears {
 			f()
 		}
-		logs.Info("server exits.")
+		logrus.Info("server exits.")
 	}()
 
 	backend.RegisterClient(cli)
 
-	if err := models.NewPool(concurrentSize*10, logWapper{log: logs}); err != nil {
+	if err := models.NewPool(concurrentSize*10, logWapper{}); err != nil {
 		return err
 	}
 
-	syncFileServer, err := newSyncFileServer(concurrentSize, logs)
+	syncFileServer, err := newSyncFileServer(concurrentSize)
 	if err != nil {
 		return err
 	}
@@ -44,27 +44,26 @@ func Start(port string, concurrentSize int, cli backend.Client, logs *logrus.Ent
 	protocol.RegisterSyncFileServer(server, syncFileServer)
 	protocol.RegisterRepoServer(server, repoServer{})
 
-	run(server, listen, logs)
+	run(server, listen)
 	return nil
 }
 
-func run(server *grpc.Server, listen net.Listener, log *logrus.Entry) {
+func run(server *grpc.Server, listen net.Listener) {
 	defer interrupts.WaitForGracefulShutdown()
 
 	interrupts.OnInterrupt(func() {
-		log.Errorf("grpc server exit...")
+		logrus.Errorf("grpc server exit...")
 		server.Stop()
 	})
 
 	if err := server.Serve(listen); err != nil {
-		log.Error(err)
+		logrus.Error(err)
 	}
 }
 
-type logWapper struct {
-	log *logrus.Entry
-}
+type logWapper struct{}
 
 func (l logWapper) Printf(format string, args ...interface{}) {
-	l.log.Infof(format, args...)
+	logrus.Printf(format, args...)
+
 }

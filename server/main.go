@@ -71,7 +71,7 @@ func main() {
 		logrus.WithError(err).Fatal("Error to generate backend")
 	}
 
-	if err := server.Start(":"+o.port, o.concurrentSize, backend, logrus.NewEntry(logrus.New())); err != nil {
+	if err := server.Start(":"+o.port, o.concurrentSize, backend); err != nil {
 		logrus.WithError(err).Fatal("Error to start grpc server.")
 	}
 }

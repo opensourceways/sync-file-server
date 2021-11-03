@@ -11,22 +11,21 @@ import (
 	"github.com/opensourceways/sync-file-server/protocol"
 )
 
-func newSyncFileServer(concurrentSize int, log *logrus.Entry) (*syncFileServer, error) {
+func newSyncFileServer(concurrentSize int) (*syncFileServer, error) {
 	p, err := ants.NewPool(concurrentSize, ants.WithOptions(ants.Options{
 		PreAlloc:    true,
 		Nonblocking: true,
-		Logger:      logWapper{log: log},
+		Logger:      logWapper{},
 	}))
 	if err != nil {
 		return nil, err
 	}
 
-	return &syncFileServer{pool: p, log: log}, nil
+	return &syncFileServer{pool: p}, nil
 }
 
 type syncFileServer struct {
 	pool *ants.Pool
-	log  *logrus.Entry
 	protocol.UnimplementedSyncFileServer
 }
 
@@ -50,7 +49,7 @@ func (s *syncFileServer) SyncFile(ctx context.Context, input *protocol.SyncFileR
 
 	err := s.submitTask(ctx, func() {
 		if err := opt.Create(); err != nil {
-			s.log.WithError(err).Error("Error to sychronize files: %+v", opt)
+			logrus.WithError(err).Error("Error to sychronize files: %+v", opt)
 		}
 	})
 
@@ -71,7 +70,7 @@ func (s *syncFileServer) SyncRepoFile(ctx context.Context, input *protocol.SyncR
 
 	err := s.submitTask(ctx, func() {
 		if err := opt.Create(); err != nil {
-			s.log.WithError(err).Errorf("Error to synchronize repo files: %+v", opt)
+			logrus.WithError(err).Errorf("Error to synchronize repo files: %+v", opt)
 		}
 	})
 
