@@ -7,18 +7,18 @@ import (
 	"github.com/opensourceways/sync-file-server/backend"
 )
 
-func NewBackend(getToken func() []byte) backend.CodePlatform {
-	return &giteeBackend{
+func NewPlatform(getToken func() []byte) backend.CodePlatform {
+	return &giteePlatform{
 		cli: giteeclient.NewClient(getToken),
 	}
 }
 
-type giteeBackend struct {
+type giteePlatform struct {
 	cli giteeclient.Client
 }
 
-func (gb *giteeBackend) ListRepos(org string) ([]string, error) {
-	repos, err := gb.cli.GetRepos(org)
+func (gp *giteePlatform) ListRepos(org string) ([]string, error) {
+	repos, err := gp.cli.GetRepos(org)
 	if err != nil || len(repos) == 0 {
 		return nil, err
 	}
@@ -30,8 +30,8 @@ func (gb *giteeBackend) ListRepos(org string) ([]string, error) {
 	return repoNames, nil
 }
 
-func (gb *giteeBackend) ListBranchesOfRepo(org, repo string) ([]backend.BranchInfo, error) {
-	branches, err := gb.cli.GetRepoAllBranch(org, repo)
+func (gp *giteePlatform) ListBranchesOfRepo(org, repo string) ([]backend.BranchInfo, error) {
+	branches, err := gp.cli.GetRepoAllBranch(org, repo)
 	if err != nil || len(branches) == 0 {
 		return nil, err
 	}
@@ -55,8 +55,8 @@ func (gb *giteeBackend) ListBranchesOfRepo(org, repo string) ([]backend.BranchIn
 	return infos, err
 }
 
-func (gb *giteeBackend) ListAllFilesOfRepo(b backend.Branch) ([]backend.RepoFile, error) {
-	trees, err := gb.cli.GetDirectoryTree(b.Org, b.Repo, b.Branch, 1)
+func (gp *giteePlatform) ListAllFilesOfRepo(b backend.Branch) ([]backend.RepoFile, error) {
+	trees, err := gp.cli.GetDirectoryTree(b.Org, b.Repo, b.Branch, 1)
 	if err != nil || len(trees.Tree) == 0 {
 		return nil, err
 	}
@@ -73,8 +73,8 @@ func (gb *giteeBackend) ListAllFilesOfRepo(b backend.Branch) ([]backend.RepoFile
 	return files, nil
 }
 
-func (gb *giteeBackend) GetFileConent(b backend.Branch, path string) (string, string, error) {
-	content, err := gb.cli.GetPathContent(b.Org, b.Repo, path, b.Branch)
+func (gp *giteePlatform) GetFileConent(b backend.Branch, path string) (string, string, error) {
+	content, err := gp.cli.GetPathContent(b.Org, b.Repo, path, b.Branch)
 	if err != nil {
 		return "", "", nil
 	}

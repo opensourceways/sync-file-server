@@ -7,6 +7,7 @@ import (
 	"io/ioutil"
 	"net/http"
 	"path"
+	"strings"
 	"time"
 
 	"github.com/opensourceways/repo-file-cache/models"
@@ -15,10 +16,15 @@ import (
 )
 
 func NewBackendStorage(platform, endpoint string) backend.Storage {
+	slash := "/"
+	if !strings.HasSuffix(endpoint, slash) {
+		endpoint += slash
+	}
+
 	return &repoFileCache{
 		platform:        platform,
 		endpoint:        endpoint,
-		summaryEndpoint: endpoint + "/%s" + "?summary=true",
+		summaryEndpoint: endpoint + "%s?summary=true",
 	}
 }
 

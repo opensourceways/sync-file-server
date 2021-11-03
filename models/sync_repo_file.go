@@ -35,16 +35,19 @@ func (s SyncRepoFileOption) Create() error {
 	}
 
 	log := logEntryForBranch(s.Branch, s.BranchSHA)
+	logError := func(f, msg string, err error) {
+		log.WithField("file name", f).WithError(err).Error(msg)
+	}
 
 	for fileName, item := range files {
 		todo, err := s.filterFile(fileName, item)
 		if err != nil {
-			log.WithField("file name", fileName).WithError(err).Error("filter file")
+			logError(fileName, "filter file", err)
 			return err
 		}
 
 		if err := syncFile(s.Branch, s.BranchSHA, todo); err != nil {
-			log.WithField("file name", fileName).WithError(err).Error("sync file")
+			logError(fileName, "sync file", err)
 		}
 	}
 	return nil

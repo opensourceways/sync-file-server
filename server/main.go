@@ -30,10 +30,12 @@ func (o *options) addFlags(fs *flag.FlagSet) {
 	fs.IntVar(&o.concurrentSize, "concurrent-size", 2000, "The grpc server goroutine pool size.")
 }
 
-func (o options) validate() error {
-	if _, err := url.Parse(o.endpoint); err != nil {
+func (o *options) validate() error {
+	v, err := url.Parse(o.endpoint)
+	if err != nil {
 		return err
 	}
+	o.endpoint = v.String()
 
 	if o.concurrentSize <= 0 {
 		return fmt.Errorf("concurrent size must be bigger than 0")

@@ -13,7 +13,7 @@ func newBackend(fileCacheEndpoint, platform string, token func() []byte) (backen
 
 	switch platform {
 	case "gitee":
-		cli = gitee.NewBackend(token)
+		cli = gitee.NewPlatform(token)
 	default:
 		return nil, fmt.Errorf("unknown platform:%s", platform)
 	}

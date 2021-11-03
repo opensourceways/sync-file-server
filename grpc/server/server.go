@@ -64,6 +64,5 @@ func run(server *grpc.Server, listen net.Listener) {
 type logWapper struct{}
 
 func (l logWapper) Printf(format string, args ...interface{}) {
-	logrus.Printf(format, args...)
-
+	logrus.Infof(format, args...)
 }
