@@ -1,7 +1,9 @@
 package models
 
 import (
+	"fmt"
 	"path/filepath"
+	"strings"
 
 	"github.com/sirupsen/logrus"
 
@@ -32,6 +34,12 @@ type fetchFileResult struct {
 	err error
 }
 
+func fetchFileError(f string, err error) fetchFileResult {
+	r := fetchFileResult{err: err}
+	r.Path = f
+	return r
+}
+
 func syncFile(branch Branch, branchSHA string, files []string) error {
 	if len(files) == 0 {
 		return nil
@@ -45,14 +53,7 @@ func syncFile(branch Branch, branchSHA string, files []string) error {
 		return func() {
 			sha, content, err := c.GetFileConent(branch, f)
 			if err != nil {
-				ch <- fetchFileResult{
-					File: File{
-						RepoFile: RepoFile{
-							Path: f,
-						},
-					},
-					err: err,
-				}
+				ch <- fetchFileError(f, err)
 			} else {
 				ch <- fetchFileResult{
 					File: File{
@@ -68,24 +69,20 @@ func syncFile(branch Branch, branchSHA string, files []string) error {
 	}
 
 	for _, f := range files {
-		_ = pool.Submit(task(f))
+		if err := pool.Submit(task(f)); err != nil {
+			ch <- fetchFileError(f, err)
+		}
 	}
 
-	log := logrus.WithFields(
-		logrus.Fields{
-			"org":        branch.Org,
-			"repo":       branch.Repo,
-			"branch":     branch.Branch,
-			"branch sha": branchSHA,
-		},
-	)
+	log := logEntryForBranch(branch, branchSHA)
+
 	i := 0
 	result := make([]File, 0, n)
 	for r := range ch {
 		if r.err == nil {
 			result = append(result, r.File)
 		} else {
-			log.WithField("file", r.File).WithError(r.err).Error("sync file")
+			log.WithField("file", r.Path).WithError(r.err).Error("sync file")
 		}
 
 		if i++; i == n {
@@ -94,12 +91,32 @@ func syncFile(branch Branch, branchSHA string, files []string) error {
 	}
 	close(ch)
 
-	if len(result) > 0 {
-		return c.SaveFiles(branch, branchSHA, result)
+	if n := len(result); n > 0 {
+		if err := c.SaveFiles(branch, branchSHA, result); err != nil {
+			fs := make([]string, n)
+			for i := range result {
+				fs[i] = result[i].Path
+			}
+			return fmt.Errorf(
+				"error to save files: %s, err: %v",
+				strings.Join(fs, "; "), err,
+			)
+		}
 	}
 	return nil
 }
 
 func parseFileName(s string) string {
 	return filepath.Base(s)
+}
+
+func logEntryForBranch(b Branch, sha string) *logrus.Entry {
+	return logrus.WithFields(
+		logrus.Fields{
+			"org":        b.Org,
+			"repo":       b.Repo,
+			"branch":     b.Branch,
+			"branch sha": sha,
+		},
+	)
 }

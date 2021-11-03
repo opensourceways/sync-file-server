@@ -14,17 +14,26 @@ import (
 	"github.com/opensourceways/sync-file-server/backend"
 )
 
-type RepoFileCache struct {
-	Platform string
-	Endpoint string
+func NewBackendStorage(platform, endpoint string) backend.Storage {
+	return &repoFileCache{
+		platform:        platform,
+		endpoint:        endpoint,
+		summaryEndpoint: endpoint + "/%s" + "?summary=true",
+	}
+}
+
+type repoFileCache struct {
+	platform        string
+	endpoint        string
+	summaryEndpoint string
 
 	cli http.Client
 }
 
-func (fc *RepoFileCache) SaveFiles(b backend.Branch, branchSHA string, files []backend.File) error {
+func (fc *repoFileCache) SaveFiles(b backend.Branch, branchSHA string, files []backend.File) error {
 	opts := models.FileUpdateOption{
 		Branch: models.Branch{
-			Platform: fc.Platform,
+			Platform: fc.platform,
 			Org:      b.Org,
 			Repo:     b.Repo,
 			Branch:   b.Branch,
@@ -49,7 +58,7 @@ func (fc *RepoFileCache) SaveFiles(b backend.Branch, branchSHA string, files []b
 		return err
 	}
 
-	req, err := http.NewRequest(http.MethodPost, fc.Endpoint, bytes.NewBuffer(payload))
+	req, err := http.NewRequest(http.MethodPost, fc.endpoint, bytes.NewBuffer(payload))
 	if err != nil {
 		return err
 	}
@@ -57,9 +66,11 @@ func (fc *RepoFileCache) SaveFiles(b backend.Branch, branchSHA string, files []b
 	return fc.forwardTo(req, nil)
 }
 
-func (fc *RepoFileCache) GetFileSummary(b backend.Branch, fileName string) ([]backend.RepoFile, error) {
-	endpoint := path.Join(fc.Endpoint, fc.Platform, b.Org, b.Repo, b.Branch, fileName)
-	endpoint += "?summary=true"
+func (fc *repoFileCache) GetFileSummary(b backend.Branch, fileName string) ([]backend.RepoFile, error) {
+	endpoint := fmt.Sprintf(
+		fc.summaryEndpoint,
+		path.Join(fc.platform, b.Org, b.Repo, b.Branch, fileName),
+	)
 
 	req, err := http.NewRequest(http.MethodGet, endpoint, nil)
 	if err != nil {
@@ -88,7 +99,7 @@ func (fc *RepoFileCache) GetFileSummary(b backend.Branch, fileName string) ([]ba
 	return r, nil
 }
 
-func (fc *RepoFileCache) forwardTo(req *http.Request, jsonResp interface{}) error {
+func (fc *repoFileCache) forwardTo(req *http.Request, jsonResp interface{}) error {
 	req.Header.Set("Content-Type", "application/json")
 	req.Header.Set("Accept", "application/json")
 	req.Header.Set("User-Agent", "sync-file-server")
@@ -115,7 +126,7 @@ func (fc *RepoFileCache) forwardTo(req *http.Request, jsonResp interface{}) erro
 	return nil
 }
 
-func (fc *RepoFileCache) do(req *http.Request) (resp *http.Response, err error) {
+func (fc *repoFileCache) do(req *http.Request) (resp *http.Response, err error) {
 	if resp, err = fc.cli.Do(req); err == nil {
 		return
 	}

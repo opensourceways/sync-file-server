@@ -25,13 +25,11 @@ func Start(port string, concurrentSize int, cli backend.Client, logs *logrus.Ent
 
 	backend.RegisterClient(cli)
 
-	log := logWapper{log: logs}
-
-	if err := models.NewPool(concurrentSize*10, log); err != nil {
+	if err := models.NewPool(concurrentSize*10, logWapper{log: logs}); err != nil {
 		return err
 	}
 
-	syncFileServer, err := newSyncFileServer(concurrentSize, log)
+	syncFileServer, err := newSyncFileServer(concurrentSize, logs)
 	if err != nil {
 		return err
 	}

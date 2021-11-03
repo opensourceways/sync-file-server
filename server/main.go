@@ -56,22 +56,22 @@ func main() {
 		logrus.WithError(err).Fatal("Invalid options")
 	}
 
+	logrus.WithField("platform", o.platform).Info("Starts sync file server.")
+
 	secretAgent := new(secret.Agent)
 	if err := secretAgent.Start([]string{o.platformTokenPath}); err != nil {
-		logrus.WithError(err).Fatal("Error starting secret agent.")
+		logrus.WithError(err).Fatal("Error to start secret agent.")
 	}
 	defer secretAgent.Stop()
 
 	getToken := secretAgent.GetTokenGenerator(o.platformTokenPath)
 
-	log := logrus.WithField("platform", o.platform)
-
 	backend, err := newBackend(o.endpoint, o.platform, getToken)
 	if err != nil {
-		log.WithError(err).Fatal("new backend")
+		logrus.WithError(err).Fatal("Error to generate backend")
 	}
 
-	if err := server.Start(":"+o.port, o.concurrentSize, backend, log); err != nil {
-		log.WithError(err).Fatal("error start grpc server.")
+	if err := server.Start(":"+o.port, o.concurrentSize, backend, logrus.NewEntry(logrus.New())); err != nil {
+		logrus.WithError(err).Fatal("Error to start grpc server.")
 	}
 }

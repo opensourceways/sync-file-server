@@ -18,16 +18,11 @@ func newBackend(fileCacheEndpoint, platform string, token func() []byte) (backen
 		return nil, fmt.Errorf("unknown platform:%s", platform)
 	}
 
-	c := &cache.RepoFileCache{
-		Platform: platform,
-		Endpoint: fileCacheEndpoint,
-	}
-
 	return struct {
 		backend.CodePlatform
 		backend.Storage
 	}{
 		CodePlatform: cli,
-		Storage:      c,
+		Storage:      cache.NewBackendStorage(platform, fileCacheEndpoint),
 	}, nil
 }
