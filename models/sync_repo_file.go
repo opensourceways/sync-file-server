@@ -40,6 +40,11 @@ func (s SyncRepoFileOption) Create() error {
 	}
 
 	for fileName, item := range files {
+		if len(item) == 0 {
+			logError(fileName, "there is not corresponding file", nil)
+			continue
+		}
+
 		todo, err := s.filterFile(fileName, item)
 		if err != nil {
 			logError(fileName, "filter file", err)
