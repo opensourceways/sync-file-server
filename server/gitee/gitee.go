@@ -1,7 +1,6 @@
 package gitee
 
 import (
-	sdk "gitee.com/openeuler/go-gitee/gitee"
 	"github.com/opensourceways/community-robot-lib/giteeclient"
 
 	"github.com/opensourceways/sync-file-server/backend"
@@ -23,10 +22,12 @@ func (gp *giteePlatform) ListRepos(org string) ([]string, error) {
 		return nil, err
 	}
 
-	repoNames := make([]string, 0, len(repos))
-	for _, repo := range repos {
-		repoNames = append(repoNames, repo.Path)
+	repoNames := make([]string, len(repos))
+
+	for i := range repos {
+		repoNames[i] = repos[i].Path
 	}
+
 	return repoNames, nil
 }
 
@@ -36,22 +37,15 @@ func (gp *giteePlatform) ListBranchesOfRepo(org, repo string) ([]backend.BranchI
 		return nil, err
 	}
 
-	transform := func(branch *sdk.Branch) backend.BranchInfo {
-		sha := ""
-		if branch.Commit != nil {
-			sha = branch.Commit.Sha
-		}
+	infos := make([]backend.BranchInfo, len(branches))
 
-		return backend.BranchInfo{
-			Name: branch.Name,
-			SHA:  sha,
-		}
-	}
-
-	infos := make([]backend.BranchInfo, 0, len(branches))
 	for i := range branches {
-		infos = append(infos, transform(&branches[i]))
+		item := &branches[i]
+
+		infos[i].Name = item.GetName()
+		infos[i].SHA = item.GetCommit().GetSha()
 	}
+
 	return infos, err
 }
 
@@ -65,11 +59,11 @@ func (gp *giteePlatform) ListAllFilesOfRepo(b backend.Branch) ([]backend.RepoFil
 
 	for i := range trees.Tree {
 		item := &trees.Tree[i]
-		files[i] = backend.RepoFile{
-			Path: item.Path,
-			SHA:  item.Sha,
-		}
+
+		files[i].Path = item.Path
+		files[i].SHA = item.Sha
 	}
+
 	return files, nil
 }
 

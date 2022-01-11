@@ -2,7 +2,7 @@ package models
 
 import (
 	"fmt"
-	"path/filepath"
+	"path"
 	"strings"
 
 	"github.com/sirupsen/logrus"
@@ -107,7 +107,7 @@ func syncFile(branch Branch, branchSHA string, files []string) error {
 }
 
 func parseFileName(s string) string {
-	return filepath.Base(s)
+	return path.Base(s)
 }
 
 func logEntryForBranch(b Branch, sha string) *logrus.Entry {
