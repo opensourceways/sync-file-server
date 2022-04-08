@@ -70,7 +70,7 @@ func (gp *giteePlatform) ListAllFilesOfRepo(b backend.Branch) ([]backend.RepoFil
 func (gp *giteePlatform) GetFileConent(b backend.Branch, path string) (string, string, error) {
 	content, err := gp.cli.GetPathContent(b.Org, b.Repo, path, b.Branch)
 	if err != nil {
-		return "", "", nil
+		return "", "", err
 	}
 	return content.Sha, content.Content, nil
 }
